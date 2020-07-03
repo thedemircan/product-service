@@ -1,0 +1,25 @@
+server:
+  port: 2222
+spring:
+  application:
+    name: Product Api
+  datasource:
+    type: com.zaxxer.hikari.HikariDataSource
+    url: jdbc:postgresql://ec2-54-247-94-127.eu-west-1.compute.amazonaws.com:5432/dadh5kul8ufets?sslmode=require
+    dataSourceClassName: org.postgresql.Driver
+    username: wncclispzrkrge
+    password: ccc1c1a50bfb63a71df497413237a957c8333fc58e38f5003f4e46f415aa3c13
+    hikari:
+      maximum-pool-size: 6
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    database: postgresql
+    show-sql: true
+    open-in-view: true
+    hibernate:
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+    properties:
+      hibernate.cache.use_query_cache: false
+      hibernate.generate_statistics: false
+    generate-ddl: true

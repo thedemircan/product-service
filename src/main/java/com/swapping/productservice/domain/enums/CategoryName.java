@@ -9,7 +9,6 @@ public enum CategoryName {
 
     ELECTRONIC(1, "Elektronik");
 
-
     private final Integer id;
     private final String description;
 }

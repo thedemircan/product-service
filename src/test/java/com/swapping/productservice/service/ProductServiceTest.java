@@ -3,7 +3,9 @@ package com.swapping.productservice.service;
 import com.swapping.productservice.converter.ProductConverter;
 import com.swapping.productservice.converter.ProductDtoConverter;
 import com.swapping.productservice.domain.Product;
+import com.swapping.productservice.exception.SwappingDomainNotFoundException;
 import com.swapping.productservice.model.request.CreateProductRequest;
+import com.swapping.productservice.model.request.DeleteProductRequest;
 import com.swapping.productservice.model.request.UpdateProductRequest;
 import com.swapping.productservice.model.response.ProductDto;
 import com.swapping.productservice.repository.ProductRepository;
@@ -12,6 +14,7 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.http.HttpStatus;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
@@ -19,6 +22,8 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -49,6 +54,21 @@ public class ProductServiceTest {
         // Then
         verify(productRepository).findById(34);
         assertThat(product).isEqualTo(actualProduct);
+    }
+
+    @Test
+    public void it_should_throw_exception_when_product_not_found() {
+        // Given
+        when(productRepository.findById(34)).thenReturn(Optional.empty());
+
+        // When
+        Throwable throwable = catchThrowable(() -> productService.findById(34));
+
+        // Then
+        verify(productRepository).findById(34);
+        SwappingDomainNotFoundException notFoundException = (SwappingDomainNotFoundException) throwable;
+        assertThat(notFoundException.getKey()).isEqualTo("product.not.found");
+        assertThat(notFoundException.getHttpStatus()).isEqualTo(HttpStatus.NOT_FOUND);
     }
 
     @Test
@@ -87,9 +107,10 @@ public class ProductServiceTest {
                 .name("product name")
                 .originalPrice(BigDecimal.valueOf(20))
                 .price(BigDecimal.TEN)
+                .userId(34)
                 .build();
 
-        Product product = Product.builder().build();
+        Product product = Product.builder().createdUserId(34).build();
         when(productRepository.findById(79)).thenReturn(Optional.of(product));
 
         // When
@@ -101,7 +122,43 @@ public class ProductServiceTest {
         assertThat(product.getPrice()).isEqualTo(BigDecimal.TEN);
         assertThat(product.getName()).isEqualTo("Product Name");
         assertThat(product.getDescription()).isEqualTo("description");
+        assertThat(product.getActive()).isFalse();
+        assertThat(product.getUpdatedUserId()).isEqualTo(34);
         verify(productRepository).save(product);
+    }
+
+    @Test
+    public void it_should_delete_product() {
+        // Given
+        DeleteProductRequest deleteProductRequest = DeleteProductRequest.builder().userId(34).build();
+        Product product = Product.builder().createdUserId(34).build();
+
+        when(productRepository.findById(79)).thenReturn(Optional.of(product));
+
+        // When
+        productService.deleteProduct(79, deleteProductRequest);
+
+        // Then
+        verify(productRepository).findById(79);
+        verify(productRepository).save(argThat(saveProduct -> saveProduct.getDeleted().equals(true) && saveProduct.getUpdatedUserId().equals(34)));
+    }
+
+    @Test
+    public void it_should_get_product_dto_by_id() {
+        // Given
+        Product product = Product.builder().build();
+        when(productRepository.findById(79)).thenReturn(Optional.of(product));
+
+        ProductDto productDto = ProductDto.builder().build();
+        when(productDtoConverter.apply(product)).thenReturn(productDto);
+
+        // When
+        ProductDto actualProductDto = productService.getProductDtoById(79);
+
+        // Then
+        verify(productRepository).findById(79);
+        verify(productDtoConverter).apply(product);
+        assertThat(actualProductDto).isEqualTo(productDto);
     }
 
     @Test

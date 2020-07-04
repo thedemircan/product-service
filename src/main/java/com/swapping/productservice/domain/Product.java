@@ -55,6 +55,10 @@ public class Product {
     @Builder.Default
     private Boolean active = false;
 
+    @Column(name = "is_deleted", nullable = false)
+    @Builder.Default
+    private Boolean deleted = false;
+
     @CreationTimestamp
     @Column(name = "created_date")
     private LocalDateTime createdDate;

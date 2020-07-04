@@ -48,7 +48,7 @@ public class Product {
     @Column(name = "category_id", nullable = false)
     private Integer categoryId;
 
-    @Column(name = "description")
+    @Column(name = "description", nullable = false)
     private String description;
 
     @Column(name = "is_active", nullable = false)

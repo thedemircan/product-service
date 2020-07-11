@@ -1,8 +1,11 @@
 package com.swapping.productservice.controller;
 
+import com.swapping.productservice.converter.ProductDtoPageableResultConverter;
 import com.swapping.productservice.model.request.CreateProductRequest;
 import com.swapping.productservice.model.request.DeleteProductRequest;
+import com.swapping.productservice.model.request.ProductFilterRequest;
 import com.swapping.productservice.model.request.UpdateProductRequest;
+import com.swapping.productservice.model.response.PageableResult;
 import com.swapping.productservice.model.response.ProductDto;
 import com.swapping.productservice.service.ProductService;
 import lombok.RequiredArgsConstructor;
@@ -14,13 +17,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
-import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -28,6 +28,7 @@ import java.util.List;
 public class ProductController {
 
     private final ProductService productService;
+    private final ProductDtoPageableResultConverter productDtoPageableResultConverter;
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
@@ -52,8 +53,7 @@ public class ProductController {
     }
 
     @GetMapping
-    public List<ProductDto> getProductDtoListByUserId(@RequestParam @NotNull Integer userId,
-                                                      @RequestParam @NotNull Boolean active) {
-        return productService.getProductDtoListByUserId(userId, active);
+    public PageableResult<ProductDto> getAllProductsByFilter(ProductFilterRequest productFilterRequest) {
+        return productDtoPageableResultConverter.apply(productService.filter(productFilterRequest), productFilterRequest);
     }
 }

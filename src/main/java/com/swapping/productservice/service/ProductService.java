@@ -6,16 +6,19 @@ import com.swapping.productservice.domain.Product;
 import com.swapping.productservice.exception.SwappingDomainNotFoundException;
 import com.swapping.productservice.model.request.CreateProductRequest;
 import com.swapping.productservice.model.request.DeleteProductRequest;
+import com.swapping.productservice.model.request.ProductFilterRequest;
 import com.swapping.productservice.model.request.UpdateProductRequest;
 import com.swapping.productservice.model.response.ProductDto;
 import com.swapping.productservice.repository.ProductRepository;
+import com.swapping.productservice.repository.ProductSpecification;
 import com.swapping.productservice.util.ValidateUtils;
 import com.swapping.productservice.util.WordUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.Objects;
 
 @Slf4j
@@ -66,8 +69,8 @@ public class ProductService {
         return productDtoConverter.apply(product);
     }
 
-    public List<ProductDto> getProductDtoListByUserId(Integer userId, Boolean active) {
-        final List<Product> products = productRepository.findByCreatedUserIdAndActive(userId, active);
-        return productDtoConverter.applyToList(products);
+    public Page<Product> filter(ProductFilterRequest productFilterRequest) {
+        return productRepository.findAll(ProductSpecification.getFilterQuery(productFilterRequest),
+                                         PageRequest.of(productFilterRequest.getPage(), productFilterRequest.getSize()));
     }
 }

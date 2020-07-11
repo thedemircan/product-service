@@ -6,6 +6,7 @@ import com.swapping.productservice.domain.Product;
 import com.swapping.productservice.exception.SwappingDomainNotFoundException;
 import com.swapping.productservice.model.request.CreateProductRequest;
 import com.swapping.productservice.model.request.DeleteProductRequest;
+import com.swapping.productservice.model.request.ProductFilterRequest;
 import com.swapping.productservice.model.request.UpdateProductRequest;
 import com.swapping.productservice.model.response.ProductDto;
 import com.swapping.productservice.repository.ProductRepository;
@@ -14,16 +15,22 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -162,26 +169,23 @@ public class ProductServiceTest {
     }
 
     @Test
-    public void it_should_get_product_dto_list_by_user_id() {
-        // Given
+    public void it_should_filter() {
+
+        //Given
+        ProductFilterRequest request = ProductFilterRequest.builder().build();
+        request.setPage(0);
+        request.setSize(20);
+
         Product product1 = Product.builder().build();
         Product product2 = Product.builder().build();
-        List<Product> products = Arrays.asList(product1, product2);
+        Page firmUserPage = new PageImpl(Arrays.asList(product1, product2));
+        Pageable pageable = PageRequest.of(0, 20);
+        when(productRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(firmUserPage);
 
-        when(productRepository.findByCreatedUserIdAndActive(79, true)).thenReturn(products);
+        //When
+        Page<Product> actualPage = productService.filter(request);
 
-        ProductDto productDto1 = ProductDto.builder().build();
-        ProductDto productDto2 = ProductDto.builder().build();
-        List<ProductDto> productDtoList = Arrays.asList(productDto1, productDto2);
-
-        when(productDtoConverter.applyToList(products)).thenReturn(productDtoList);
-
-        // When
-        List<ProductDto> actualProductDtoList = productService.getProductDtoListByUserId(79, true);
-
-        // Then
-        verify(productRepository).findByCreatedUserIdAndActive(79, true);
-        verify(productDtoConverter).applyToList(products);
-        assertThat(actualProductDtoList).containsExactlyInAnyOrder(productDto1, productDto2);
+        //Then
+        assertThat(actualPage).isEqualTo(firmUserPage);
     }
 }

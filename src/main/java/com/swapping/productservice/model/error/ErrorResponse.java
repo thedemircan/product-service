@@ -11,7 +11,9 @@ import lombok.ToString;
 
 import java.io.Serializable;
 import java.time.ZoneId;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Getter
 @Setter
@@ -31,4 +33,6 @@ public class ErrorResponse implements Serializable {
     @Singular
     private List<String> errors;
 
+    @Builder.Default
+    private Map<String, List<String>> fieldErrors = new HashMap<>();
 }

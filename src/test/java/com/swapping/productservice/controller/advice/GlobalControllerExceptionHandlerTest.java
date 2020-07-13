@@ -1,5 +1,6 @@
 package com.swapping.productservice.controller.advice;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.swapping.productservice.exception.SwappingDomainNotFoundException;
 import com.swapping.productservice.exception.SwappingException;
 import com.swapping.productservice.model.error.ErrorResponse;
@@ -29,6 +30,9 @@ public class GlobalControllerExceptionHandlerTest {
 
     @Mock
     private MessageSource messageSource;
+
+    @Mock
+    private ObjectMapper objectMapper;
 
     @Test
     public void it_should_resolve_swappingException() {

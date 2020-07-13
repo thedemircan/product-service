@@ -50,6 +50,7 @@ public class ProductService {
         product.setName(WordUtil.toTitle(updateProductRequest.getName()));
         product.setDescription(updateProductRequest.getDescription().toLowerCase());
         product.setPrice(updateProductRequest.getPrice());
+        //TODO: Ürünün fiyatı değiştiğini sepete bildir. Async
         product.setOriginalPrice(Objects.nonNull(updateProductRequest.getOriginalPrice()) ? updateProductRequest.getOriginalPrice() : null);
         product.setActive(false);
         product.setUpdatedUserId(updateProductRequest.getUserId());
@@ -61,6 +62,7 @@ public class ProductService {
         ValidateUtils.assertAuthority(deleteProductRequest.getUserId(), product.getCreatedUserId(), "delete.product.authority");
         product.setDeleted(true);
         product.setUpdatedUserId(deleteProductRequest.getUserId());
+        //TODO: Ürünün silindiğini sepete bildir. Async
         save(product);
     }
 

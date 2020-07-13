@@ -1,0 +1,12 @@
+version: '3'
+services:
+  productservice:
+    image: swapping-productservice:latest
+    network_mode: bridge
+    container_name: swapping-productservice
+    expose:
+      - 2222
+    ports:
+      - 2222:2222
+    restart: unless-stopped
+    command: mvn spring-boot:run

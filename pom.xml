@@ -15,7 +15,7 @@
 	<description>Product Service for swapping</description>
 
 	<properties>
-		<java.version>11</java.version>
+		<java.version>1.8</java.version>
 		<spring-cloud-starter-openfeign.version>2.1.1.RELEASE</spring-cloud-starter-openfeign.version>
 		<jacoco.version>0.8.3</jacoco.version>
 	</properties>

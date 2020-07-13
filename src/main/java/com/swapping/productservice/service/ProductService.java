@@ -60,6 +60,7 @@ public class ProductService {
     public void deleteProduct(Integer id, DeleteProductRequest deleteProductRequest) {
         final Product product = findById(id);
         ValidateUtils.assertAuthority(deleteProductRequest.getUserId(), product.getCreatedUserId(), "delete.product.authority");
+        log.info("product deleting: {}, userId: {}", id, deleteProductRequest.getUserId());
         product.setDeleted(true);
         product.setUpdatedUserId(deleteProductRequest.getUserId());
         //TODO: Ürünün silindiğini sepete bildir. Async

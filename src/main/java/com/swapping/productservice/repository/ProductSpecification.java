@@ -15,7 +15,6 @@ public class ProductSpecification {
 
     private static final String CATEGORY_ID = "categoryId";
     private static final String ACTIVE = "active";
-    private static final String IS_DELETED = "deleted";
     private static final String USER_ID = "createdUserId";
 
 
@@ -23,7 +22,6 @@ public class ProductSpecification {
 
         return (root, query, cb) -> {
             Predicate conjunction = cb.conjunction();
-            conjunction = cb.and(conjunction, cb.and(cb.equal(root.get(IS_DELETED), false)));
 
             conjunction = cb.and(conjunction, cb.and(cb.equal(root.get(ACTIVE), productFilterRequest.isActive())));
 

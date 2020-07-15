@@ -2,8 +2,10 @@ package com.swapping.productservice.service;
 
 import com.swapping.productservice.converter.ProductConverter;
 import com.swapping.productservice.converter.ProductDtoConverter;
+import com.swapping.productservice.converter.UpdateBasketItemDtoConverter;
 import com.swapping.productservice.domain.Product;
 import com.swapping.productservice.exception.SwappingDomainNotFoundException;
+import com.swapping.productservice.model.UpdateBasketItemDto;
 import com.swapping.productservice.model.request.CreateProductRequest;
 import com.swapping.productservice.model.request.DeleteProductRequest;
 import com.swapping.productservice.model.request.ProductFilterRequest;
@@ -15,6 +17,7 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -48,6 +51,12 @@ public class ProductServiceTest {
 
     @Mock
     private ProductDtoConverter productDtoConverter;
+
+    @Mock
+    private UpdateBasketItemDtoConverter updateBasketItemDtoConverter;
+
+    @Mock
+    private RabbitTemplate rabbitTemplate;
 
     @Test
     public void it_should_find_by_id() {
@@ -120,6 +129,9 @@ public class ProductServiceTest {
         Product product = Product.builder().createdUserId(34).build();
         when(productRepository.findById(79)).thenReturn(Optional.of(product));
 
+        UpdateBasketItemDto updateBasketItemDto = UpdateBasketItemDto.builder().build();
+        when(updateBasketItemDtoConverter.convert(product)).thenReturn(updateBasketItemDto);
+
         // When
         productService.updateProduct(79, updateProductRequest);
 
@@ -132,6 +144,8 @@ public class ProductServiceTest {
         assertThat(product.getActive()).isFalse();
         assertThat(product.getUpdatedUserId()).isEqualTo(34);
         verify(productRepository).save(product);
+        verify(updateBasketItemDtoConverter).convert(product);
+        verify(rabbitTemplate).convertAndSend("update.basket.item", "", updateBasketItemDto);
     }
 
     @Test
@@ -142,12 +156,17 @@ public class ProductServiceTest {
 
         when(productRepository.findById(79)).thenReturn(Optional.of(product));
 
+        UpdateBasketItemDto updateBasketItemDto = UpdateBasketItemDto.builder().build();
+        when(updateBasketItemDtoConverter.convert(product)).thenReturn(updateBasketItemDto);
+
         // When
         productService.deleteProduct(79, deleteProductRequest);
 
         // Then
         verify(productRepository).findById(79);
         verify(productRepository).save(argThat(saveProduct -> saveProduct.getDeleted().equals(true) && saveProduct.getUpdatedUserId().equals(34)));
+        verify(updateBasketItemDtoConverter).convert(product);
+        verify(rabbitTemplate).convertAndSend("update.basket.item", "", updateBasketItemDto);
     }
 
     @Test
@@ -170,7 +189,6 @@ public class ProductServiceTest {
 
     @Test
     public void it_should_filter() {
-
         //Given
         ProductFilterRequest request = ProductFilterRequest.builder().build();
         request.setPage(0);

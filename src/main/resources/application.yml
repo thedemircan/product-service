@@ -23,3 +23,16 @@ spring:
       hibernate.cache.use_query_cache: false
       hibernate.generate_statistics: false
     generate-ddl: true
+  rabbitmq:
+    host: 127.0.0.1
+    port: 5672
+    username: guest
+    password: guest
+    listener:
+      simple:
+        retry:
+          max-attempts: 3
+          enabled: true
+        prefetch: 30
+        concurrency: 1
+    virtual-host: /

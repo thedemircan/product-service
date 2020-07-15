@@ -2,6 +2,7 @@ package com.swapping.productservice.service;
 
 import com.swapping.productservice.converter.ProductConverter;
 import com.swapping.productservice.converter.ProductDtoConverter;
+import com.swapping.productservice.converter.UpdateBasketItemDtoConverter;
 import com.swapping.productservice.domain.Product;
 import com.swapping.productservice.exception.SwappingDomainNotFoundException;
 import com.swapping.productservice.model.request.CreateProductRequest;
@@ -15,6 +16,7 @@ import com.swapping.productservice.util.ValidateUtils;
 import com.swapping.productservice.util.WordUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -26,9 +28,13 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class ProductService {
 
+    private static final String UPDATE_BASKET_ITEM_EXCHANGE = "update.basket.item";
+
     private final ProductRepository productRepository;
     private final ProductConverter productConverter;
     private final ProductDtoConverter productDtoConverter;
+    private final UpdateBasketItemDtoConverter updateProductDtoConverter;
+    private final RabbitTemplate rabbitTemplate;
 
     public Product save(Product product) {
         return productRepository.save(product);
@@ -50,11 +56,11 @@ public class ProductService {
         product.setName(WordUtil.toTitle(updateProductRequest.getName()));
         product.setDescription(updateProductRequest.getDescription().toLowerCase());
         product.setPrice(updateProductRequest.getPrice());
-        //TODO: Ürünün fiyatı değiştiğini sepete bildir. Async
         product.setOriginalPrice(Objects.nonNull(updateProductRequest.getOriginalPrice()) ? updateProductRequest.getOriginalPrice() : null);
         product.setActive(false);
         product.setUpdatedUserId(updateProductRequest.getUserId());
         save(product);
+        rabbitTemplate.convertAndSend(UPDATE_BASKET_ITEM_EXCHANGE, "", updateProductDtoConverter.convert(product));
     }
 
     public void deleteProduct(Integer id, DeleteProductRequest deleteProductRequest) {
@@ -62,9 +68,10 @@ public class ProductService {
         ValidateUtils.assertAuthority(deleteProductRequest.getUserId(), product.getCreatedUserId(), "delete.product.authority");
         log.info("product deleting: {}, userId: {}", id, deleteProductRequest.getUserId());
         product.setDeleted(true);
+        product.setActive(false);
         product.setUpdatedUserId(deleteProductRequest.getUserId());
-        //TODO: Ürünün silindiğini sepete bildir. Async
         save(product);
+        rabbitTemplate.convertAndSend(UPDATE_BASKET_ITEM_EXCHANGE, "", updateProductDtoConverter.convert(product));
     }
 
     public ProductDto getProductDtoById(Integer id) {

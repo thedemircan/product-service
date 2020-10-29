@@ -28,6 +28,7 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class ProductService {
 
+    private static final String SORT_BY_ID = "id";
     private static final String UPDATE_BASKET_ITEM_EXCHANGE = "update.basket.item";
 
     private final ProductRepository productRepository;
@@ -57,7 +58,7 @@ public class ProductService {
         product.setDescription(updateProductRequest.getDescription().toLowerCase());
         product.setPrice(updateProductRequest.getPrice());
         product.setOriginalPrice(Objects.nonNull(updateProductRequest.getOriginalPrice()) ? updateProductRequest.getOriginalPrice() : null);
-        product.setActive(false);
+        product.setActive(Boolean.FALSE);
         product.setUpdatedUserId(updateProductRequest.getUserId());
         save(product);
         rabbitTemplate.convertAndSend(UPDATE_BASKET_ITEM_EXCHANGE, "", updateProductDtoConverter.convert(product));
@@ -67,8 +68,8 @@ public class ProductService {
         final Product product = findById(id);
         ValidateUtils.assertAuthority(deleteProductRequest.getUserId(), product.getCreatedUserId(), "delete.product.authority");
         log.info("product deleting: {}, userId: {}", id, deleteProductRequest.getUserId());
-        product.setDeleted(true);
-        product.setActive(false);
+        product.setDeleted(Boolean.TRUE);
+        product.setActive(Boolean.FALSE);
         product.setUpdatedUserId(deleteProductRequest.getUserId());
         save(product);
         rabbitTemplate.convertAndSend(UPDATE_BASKET_ITEM_EXCHANGE, "", updateProductDtoConverter.convert(product));
@@ -80,7 +81,10 @@ public class ProductService {
     }
 
     public Page<Product> filter(ProductFilterRequest productFilterRequest) {
-        return productRepository.findAll(ProductSpecification.getFilterQuery(productFilterRequest),
-                                         PageRequest.of(productFilterRequest.getPage(), productFilterRequest.getSize()));
+        final PageRequest pageRequest = PageRequest.of(productFilterRequest.getPage(),
+                                                       productFilterRequest.getSize(),
+                                                       productFilterRequest.getSort(),
+                                                       SORT_BY_ID);
+        return productRepository.findAll(ProductSpecification.getFilterQuery(productFilterRequest), pageRequest);
     }
 }

@@ -22,6 +22,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 
@@ -190,20 +191,22 @@ public class ProductServiceTest {
     @Test
     public void it_should_filter() {
         //Given
-        ProductFilterRequest request = ProductFilterRequest.builder().build();
+        ProductFilterRequest request = new ProductFilterRequest();
         request.setPage(0);
         request.setSize(20);
+        request.setSort(Sort.Direction.DESC);
 
         Product product1 = Product.builder().build();
         Product product2 = Product.builder().build();
-        Page firmUserPage = new PageImpl(Arrays.asList(product1, product2));
-        Pageable pageable = PageRequest.of(0, 20);
-        when(productRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(firmUserPage);
+        Page page = new PageImpl(Arrays.asList(product1, product2));
+
+        Pageable pageable = PageRequest.of(0, 20, Sort.Direction.DESC, "id");
+        when(productRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(page);
 
         //When
         Page<Product> actualPage = productService.filter(request);
 
         //Then
-        assertThat(actualPage).isEqualTo(firmUserPage);
+        assertThat(actualPage).isEqualTo(page);
     }
 }

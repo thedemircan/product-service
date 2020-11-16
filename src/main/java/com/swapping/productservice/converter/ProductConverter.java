@@ -20,6 +20,7 @@ public class ProductConverter implements Function<CreateProductRequest, Product>
                 .categoryId(createProductRequest.getCategory().getId())
                 .description(createProductRequest.getDescription().toLowerCase())
                 .createdUserId(createProductRequest.getUserId())
+                .active(Boolean.FALSE)
                 .build();
     }
 }

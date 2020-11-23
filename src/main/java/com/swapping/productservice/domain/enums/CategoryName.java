@@ -7,7 +7,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum CategoryName {
 
-    ELECTRONIC(1, "Elektronik");
+    ELECTRONIC(1, "Elektronik"),
+    COSMETIC(2, "Kozmetik");
 
     private final Integer id;
     private final String description;

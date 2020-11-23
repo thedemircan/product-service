@@ -7,20 +7,14 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.math.BigDecimal;
-
 @Getter
 @Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ProductDto {
+public class CategoryDto {
 
-    private Integer userId;
-    private String name;
-    private BigDecimal price;
-    private BigDecimal originalPrice;
-    private CategoryName category;
+    private Integer id;
     private String description;
-    private Boolean active;
+    private CategoryName name;
 }

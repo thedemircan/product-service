@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: Product Service
+  datasource:
+    type: com.zaxxer.hikari.HikariDataSource
+    name: ~
+    password: ~
+    url: ~
+    username: ~
+  jpa:
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect

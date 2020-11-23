@@ -12,7 +12,6 @@ import lombok.ToString;
 import java.io.Serializable;
 import java.time.ZoneId;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @Getter
@@ -30,9 +29,8 @@ public class ErrorResponse implements Serializable {
     @Builder.Default
     private Long timestamp = Clock.now().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
 
-    @Singular
-    private List<String> errors;
+    private String error;
 
-    @Builder.Default
-    private Map<String, List<String>> fieldErrors = new HashMap<>();
+    @Singular
+    private Map<String, String> fieldErrors = new HashMap<>();
 }

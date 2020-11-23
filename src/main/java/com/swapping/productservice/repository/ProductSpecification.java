@@ -19,16 +19,13 @@ public class ProductSpecification {
 
 
     public static Specification<Product> getFilterQuery(ProductFilterRequest productFilterRequest) {
-
         return (root, query, cb) -> {
             Predicate conjunction = cb.conjunction();
-
             conjunction = cb.and(conjunction, cb.and(cb.equal(root.get(ACTIVE), productFilterRequest.isActive())));
 
             if (Objects.nonNull(productFilterRequest.getUserId())) {
                 conjunction = cb.and(conjunction, cb.and(cb.equal(root.get(USER_ID), productFilterRequest.getUserId())));
             }
-
             if (Objects.nonNull(productFilterRequest.getCategory())) {
                 conjunction = cb.and(conjunction, cb.and(cb.equal(root.get(CATEGORY_ID), productFilterRequest.getCategory().getId())));
             }

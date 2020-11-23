@@ -1,40 +1,36 @@
 package com.swapping.productservice.service;
 
 import com.swapping.productservice.converter.ProductConverter;
-import com.swapping.productservice.converter.ProductDtoConverter;
-import com.swapping.productservice.converter.UpdateBasketItemDtoConverter;
 import com.swapping.productservice.domain.Product;
 import com.swapping.productservice.exception.SwappingDomainNotFoundException;
-import com.swapping.productservice.model.UpdateBasketItemDto;
 import com.swapping.productservice.model.request.CreateProductRequest;
 import com.swapping.productservice.model.request.DeleteProductRequest;
 import com.swapping.productservice.model.request.ProductFilterRequest;
 import com.swapping.productservice.model.request.UpdateProductRequest;
+import com.swapping.productservice.model.response.PagingResult;
 import com.swapping.productservice.model.response.ProductDto;
 import com.swapping.productservice.repository.ProductRepository;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 
 import java.math.BigDecimal;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -49,15 +45,6 @@ public class ProductServiceTest {
 
     @Mock
     private ProductRepository productRepository;
-
-    @Mock
-    private ProductDtoConverter productDtoConverter;
-
-    @Mock
-    private UpdateBasketItemDtoConverter updateBasketItemDtoConverter;
-
-    @Mock
-    private RabbitTemplate rabbitTemplate;
 
     @Test
     public void it_should_find_by_id() {
@@ -106,13 +93,13 @@ public class ProductServiceTest {
         CreateProductRequest createProductRequest = CreateProductRequest.builder().build();
 
         Product product = Product.builder().build();
-        when(productConverter.apply(createProductRequest)).thenReturn(product);
+        when(productConverter.toEntity(createProductRequest)).thenReturn(product);
 
         // When
         productService.createProduct(createProductRequest);
 
         // Then
-        verify(productConverter).apply(createProductRequest);
+        verify(productConverter).toEntity(createProductRequest);
         verify(productRepository).save(product);
     }
 
@@ -130,9 +117,6 @@ public class ProductServiceTest {
         Product product = Product.builder().createdUserId(34).build();
         when(productRepository.findById(79)).thenReturn(Optional.of(product));
 
-        UpdateBasketItemDto updateBasketItemDto = UpdateBasketItemDto.builder().build();
-        when(updateBasketItemDtoConverter.convert(product)).thenReturn(updateBasketItemDto);
-
         // When
         productService.updateProduct(79, updateProductRequest);
 
@@ -145,8 +129,6 @@ public class ProductServiceTest {
         assertThat(product.getActive()).isFalse();
         assertThat(product.getUpdatedUserId()).isEqualTo(34);
         verify(productRepository).save(product);
-        verify(updateBasketItemDtoConverter).convert(product);
-        verify(rabbitTemplate).convertAndSend("update.basket.item", "", updateBasketItemDto);
     }
 
     @Test
@@ -157,17 +139,12 @@ public class ProductServiceTest {
 
         when(productRepository.findById(79)).thenReturn(Optional.of(product));
 
-        UpdateBasketItemDto updateBasketItemDto = UpdateBasketItemDto.builder().build();
-        when(updateBasketItemDtoConverter.convert(product)).thenReturn(updateBasketItemDto);
-
         // When
         productService.deleteProduct(79, deleteProductRequest);
 
         // Then
         verify(productRepository).findById(79);
         verify(productRepository).save(argThat(saveProduct -> saveProduct.getDeleted().equals(true) && saveProduct.getUpdatedUserId().equals(34)));
-        verify(updateBasketItemDtoConverter).convert(product);
-        verify(rabbitTemplate).convertAndSend("update.basket.item", "", updateBasketItemDto);
     }
 
     @Test
@@ -177,36 +154,43 @@ public class ProductServiceTest {
         when(productRepository.findById(79)).thenReturn(Optional.of(product));
 
         ProductDto productDto = ProductDto.builder().build();
-        when(productDtoConverter.apply(product)).thenReturn(productDto);
+        when(productConverter.toDto(product)).thenReturn(productDto);
 
         // When
         ProductDto actualProductDto = productService.getProductDtoById(79);
 
         // Then
         verify(productRepository).findById(79);
-        verify(productDtoConverter).apply(product);
+        verify(productConverter).toDto(product);
         assertThat(actualProductDto).isEqualTo(productDto);
     }
 
     @Test
     public void it_should_filter() {
         //Given
-        ProductFilterRequest request = new ProductFilterRequest();
-        request.setPage(0);
-        request.setSize(20);
-        request.setSort(Sort.Direction.DESC);
+        ProductFilterRequest productFilterRequest = new ProductFilterRequest();
+        productFilterRequest.setPage(1);
+        productFilterRequest.setSize(20);
+        productFilterRequest.setSort(Sort.Direction.ASC);
 
-        Product product1 = Product.builder().build();
-        Product product2 = Product.builder().build();
-        Page page = new PageImpl(Arrays.asList(product1, product2));
+        Product product = Product.builder().build();
+        Page<Product> productPage = new PageImpl(Collections.singletonList(product));
+        ArgumentCaptor<Pageable> pageableArgumentCaptor = ArgumentCaptor.forClass(Pageable.class);
+        ProductDto productDto = ProductDto.builder().build();
 
-        Pageable pageable = PageRequest.of(0, 20, Sort.Direction.DESC, "id");
-        when(productRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(page);
+        when(productRepository.findAll(any(Specification.class), pageableArgumentCaptor.capture())).thenReturn(productPage);
+        when(productConverter.toDto(product)).thenReturn(productDto);
 
-        //When
-        Page<Product> actualPage = productService.filter(request);
+        // When
+        PagingResult<ProductDto> pageableProducts = productService.filter(productFilterRequest);
 
-        //Then
-        assertThat(actualPage).isEqualTo(page);
+        // Then
+        verify(productConverter).toDto(product);
+        verify(productRepository).findAll(any(Specification.class), pageableArgumentCaptor.capture());
+        assertThat(pageableProducts.getContent()).containsExactly(productDto);
+        assertThat(pageableArgumentCaptor.getValue().getPageNumber()).isEqualTo(1);
+        assertThat(pageableArgumentCaptor.getValue().getPageSize()).isEqualTo(20);
+        assertThat(pageableArgumentCaptor.getValue().isPaged()).isTrue();
+        assertThat(pageableArgumentCaptor.getValue().getSort().isSorted()).isTrue();
     }
 }

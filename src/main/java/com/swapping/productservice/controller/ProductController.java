@@ -1,11 +1,10 @@
 package com.swapping.productservice.controller;
 
-import com.swapping.productservice.converter.ProductDtoPageableResultConverter;
 import com.swapping.productservice.model.request.CreateProductRequest;
 import com.swapping.productservice.model.request.DeleteProductRequest;
 import com.swapping.productservice.model.request.ProductFilterRequest;
 import com.swapping.productservice.model.request.UpdateProductRequest;
-import com.swapping.productservice.model.response.PageableResult;
+import com.swapping.productservice.model.response.PagingResult;
 import com.swapping.productservice.model.response.ProductDto;
 import com.swapping.productservice.service.ProductService;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +27,6 @@ import javax.validation.Valid;
 public class ProductController {
 
     private final ProductService productService;
-    private final ProductDtoPageableResultConverter productDtoPageableResultConverter;
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
@@ -53,7 +51,7 @@ public class ProductController {
     }
 
     @GetMapping
-    public PageableResult<ProductDto> getAllProductsByFilter(ProductFilterRequest productFilterRequest) {
-        return productDtoPageableResultConverter.apply(productService.filter(productFilterRequest), productFilterRequest);
+    public PagingResult<ProductDto> getAllProductsByFilter(ProductFilterRequest productFilterRequest) {
+        return productService.filter(productFilterRequest);
     }
 }

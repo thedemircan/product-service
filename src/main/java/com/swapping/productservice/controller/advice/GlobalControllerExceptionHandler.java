@@ -17,10 +17,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.io.IOException;
 import java.util.Collections;
-import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 @RestControllerAdvice
 @RequiredArgsConstructor
@@ -43,13 +41,13 @@ public class GlobalControllerExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleMethodArgumentNotValidException(MethodArgumentNotValidException exception) {
         log.error("MethodArgumentNotValidException occurred", exception);
-        final List<String> errorMessages = exception.getBindingResult().getFieldErrors().stream()
+        final String errorMessage = exception.getBindingResult().getFieldErrors().stream()
                 .map(this::getMessage)
-                .collect(Collectors.toList());
+                .findFirst()
+                .orElseThrow(() -> new SwappingException("not.valid", HttpStatus.BAD_REQUEST));
         final ErrorResponse errorResponse = ErrorResponse.builder()
                 .exception(exception.getClass().getName())
-                .errors(errorMessages)
-                .timestamp(System.currentTimeMillis())
+                .error(errorMessage)
                 .build();
         return new ResponseEntity<>(errorResponse, org.springframework.http.HttpStatus.BAD_REQUEST);
     }
@@ -81,7 +79,7 @@ public class GlobalControllerExceptionHandler {
             return new ErrorResponse(
                     "ApiClientException",
                     System.currentTimeMillis(),
-                    Collections.singletonList("Api client exception occurred. Detail: " + getFeignExceptionContent(exception)),
+                    "Api client exception occurred. Detail: " + getFeignExceptionContent(exception),
                     Collections.emptyMap()
             );
         }

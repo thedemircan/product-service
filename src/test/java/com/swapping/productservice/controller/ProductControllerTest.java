@@ -1,14 +1,12 @@
 package com.swapping.productservice.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.swapping.productservice.converter.ProductDtoPageableResultConverter;
-import com.swapping.productservice.domain.Product;
 import com.swapping.productservice.domain.enums.CategoryName;
 import com.swapping.productservice.model.request.CreateProductRequest;
 import com.swapping.productservice.model.request.DeleteProductRequest;
 import com.swapping.productservice.model.request.ProductFilterRequest;
 import com.swapping.productservice.model.request.UpdateProductRequest;
-import com.swapping.productservice.model.response.PageableResult;
+import com.swapping.productservice.model.response.PagingResult;
 import com.swapping.productservice.model.response.ProductDto;
 import com.swapping.productservice.service.ProductService;
 import org.junit.Test;
@@ -17,8 +15,6 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
@@ -48,9 +44,6 @@ public class ProductControllerTest {
 
     @MockBean
     private ProductService productService;
-
-    @MockBean
-    private ProductDtoPageableResultConverter productDtoPageableResultConverter;
 
     @Test
     public void it_should_create_product() throws Exception {
@@ -150,16 +143,12 @@ public class ProductControllerTest {
         //Given
         ArgumentCaptor<ProductFilterRequest> requestArgumentCaptor = ArgumentCaptor.forClass(ProductFilterRequest.class);
 
-        Product product1 = Product.builder().build();
-        Product product2 = Product.builder().build();
-        Page<Product> pageProduct = new PageImpl<>(Arrays.asList(product1, product2));
-        when(productService.filter(requestArgumentCaptor.capture())).thenReturn(pageProduct);
-
         ProductDto productDto1 = ProductDto.builder().build();
         ProductDto productDto2 = ProductDto.builder().build();
         List<ProductDto> content = Arrays.asList(productDto1, productDto2);
-        PageableResult<ProductDto> pageableResult = new PageableResult<>(27, 0, 2, content);
-        when(productDtoPageableResultConverter.apply(eq(pageProduct), requestArgumentCaptor.capture())).thenReturn(pageableResult);
+        PagingResult<ProductDto> pagingResult = new PagingResult<>(content, 27, 0, 2, 1);
+        when(productService.filter(requestArgumentCaptor.capture())).thenReturn(pagingResult);
+
 
         //When
         ResultActions resultActions = mockMvc.perform(get("/products?page=0&size=2").contentType(MediaType.APPLICATION_JSON));
@@ -167,6 +156,5 @@ public class ProductControllerTest {
         //Then
         resultActions.andExpect(status().isOk());
         verify(productService).filter(requestArgumentCaptor.capture());
-        verify(productDtoPageableResultConverter).apply(eq(pageProduct), requestArgumentCaptor.capture());
     }
 }

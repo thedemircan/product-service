@@ -7,7 +7,9 @@ import org.apache.commons.text.WordUtils;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class WordUtil {
 
-    public static String toTitle(String string) {
-        return WordUtils.capitalizeFully(string);
+    private static final char[] PUNCTUATION = {'.', ' ', '!', '?', ';'};
+
+    public static String toCapitalizeFully(String string) {
+        return WordUtils.capitalizeFully(string, PUNCTUATION);
     }
 }
